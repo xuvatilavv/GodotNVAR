@@ -13,7 +13,7 @@ public:
     void _init() { }
 
     /** Print an error to the console **/
-    void printError(nvarStatus_t status) {
+    void printError(nvarStatus_t status, const char* func, int line) {
         const char* title;
         const char* description;
         const char** pTitle = &title;
@@ -23,17 +23,18 @@ public:
 
         titleStatus = nvarGetStatusString(pTitle, status);
         if (titleStatus != NVAR_STATUS_SUCCESS) {
-            Godot::print("Unspecified error!");
-            return;
+            *pTitle = "UNDEFINED";
         }
 
         descStatus = nvarGetStatusDescription(pDescription, status);
+        if (descStatus != NVAR_STATUS_SUCCESS) {
+            *pDescription = "The description is not defined.";
+        }
 
-        godot::String message = "Error: ";
-        message += *pTitle;
-        message += "\n\t";
+        std::string message = *pTitle;
+        message += ": ";
         message += *pDescription;
-        Godot::print(message);
+        Godot::print_error(message.c_str(), func, __FILE__, line);
     }
     
     /** Gets the string representation of a status code enum **/
@@ -58,7 +59,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(version);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
             return Variant();
         }
     }
@@ -74,7 +75,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(channels);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
             return Variant();
         }
     }
@@ -89,7 +90,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -101,7 +102,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -114,7 +115,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(flags);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -128,7 +129,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(deviceCount);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -142,7 +143,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(name);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -157,7 +158,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(device);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -171,7 +172,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -183,7 +184,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -196,7 +197,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(deviceNum);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -210,7 +211,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(reverbLength);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -225,7 +226,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -238,7 +239,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(sampleRate);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -253,7 +254,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             //
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -266,7 +267,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(static_cast<int>(outputFormat));
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -281,7 +282,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -294,7 +295,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(decayFactor);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -307,7 +308,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -320,7 +321,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(ratio);
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -333,7 +334,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -345,7 +346,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -358,7 +359,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -371,7 +372,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(Vector3(location.x, location.y, location.z));
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -388,7 +389,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -402,7 +403,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(Vector3(forward.x, forward.y, forward.z));
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -417,7 +418,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             return Variant(Vector3(up.x, up.y, up.z));
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
         return Variant();
     }
@@ -438,7 +439,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -450,7 +451,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
@@ -468,7 +469,7 @@ public:
         if (nvarStatus == NVAR_STATUS_SUCCESS) {
             // Success
         } else {
-            printError(nvarStatus);
+            printError(nvarStatus, __FUNCTION__, __LINE__);
         }
     }
 
