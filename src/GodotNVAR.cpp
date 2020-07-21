@@ -1,6 +1,7 @@
 #include <Godot.hpp>
 #include <Reference.hpp>
 #include "nvar.h"
+#include <map>
 
 using namespace godot;
 
@@ -473,6 +474,139 @@ public:
         }
     }
 
+    /** Creates an acoustic material with default properties and the given id **/
+    void createMaterial(godot::String id) {
+        nvarStatus_t nvarStatus;
+        nvarMaterial_t material;
+        if (materials.count(id) > 0) {// A material with this id already exists.
+            Godot::print_error("Attempted to create a material with a duplicate id: " + id,
+                __FUNCTIONW__, __FILE__, __LINE__);
+            return;
+        }
+
+        nvarStatus = nvarCreateMaterial(nvar, &material);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            materials[id] = &material;
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
+    /** Creates a predefined acoustic material **/
+    void createPredefinedMaterial(godot::String id, int predefined_material) {
+        nvarStatus_t nvarStatus;
+        nvarMaterial_t material;
+        if (materials.count(id) > 0) {// A material with this id already exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return;
+        }
+
+        nvarStatus = nvarCreatePredefinedMaterial(nvar, &material, static_cast<nvarPredefinedMaterial_t>(predefined_material));
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            materials[id] = &material;
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
+    /** Destroys the specified acoustic material **/
+    void destroyMaterial(godot::String id) {
+        nvarStatus_t nvarStatus;
+        if (materials.count(id) == 0) { // No material with this id exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return;
+        }
+        nvarMaterial_t* material = materials[id];
+
+        nvarStatus = nvarDestroyMaterial(*material);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            materials.erase(id);
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
+    /** Returns an array of created material IDs */
+    Variant getMaterialIDs() {
+        godot::Array out;
+        for(std::map<godot::String, nvarMaterial_t*>::iterator it = materials.begin(); it != materials.end(); ++it) {
+            out.push_back(it->first);
+        }
+        return Variant(out);
+    }
+
+    /** Gets the reflection coefficient of the acoustic material **/
+    Variant getMaterialReflection(godot::String id) {
+        nvarStatus_t nvarStatus;
+        float reflection;
+        if (materials.count(id) == 0) { // No material with this id exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return Variant();
+        }
+        nvarMaterial_t* material = materials[id];
+
+        nvarStatus = nvarGetMaterialReflection(*material, &reflection);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            return Variant(reflection);
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+        return Variant();
+    }
+
+    /** Sets the reflection coefficient of the acoustic material **/
+    void setMaterialReflection(godot::String id, const float reflection) {
+        nvarStatus_t nvarStatus;
+        if (materials.count(id) == 0) { // No material with this id exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return;
+        }
+        nvarMaterial_t* material = materials[id];
+
+        nvarStatus = nvarSetMaterialReflection(*material, reflection);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            // Success
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
+    /** Gets the transmission coefficient of the acoustic material **/
+    Variant getMaterialTransmission(godot::String id) {
+        nvarStatus_t nvarStatus;
+        float transmission;
+        if (materials.count(id) == 0) { // No material with this id exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return Variant();
+        }
+        nvarMaterial_t* material = materials[id];
+
+        nvarStatus = nvarGetMaterialTransmission(*material, &transmission);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            return Variant(transmission);
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+        return Variant();
+    }
+    
+    /** Sets the transmission coefficient of the acoustic material **/
+    void setMaterialTransmission(godot::String id, const float transmission) {
+        nvarStatus_t nvarStatus;
+        if (materials.count(id) == 0) { // No material with this id exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return;
+        }
+        nvarMaterial_t* material = materials[id];
+
+        nvarStatus = nvarSetMaterialTransmission(*material, transmission);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            // Success
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
     /** Register methods, members, and signals to expose them to Godot **/
     static void _register_methods() {
         register_method("get_version", &GodotNVAR::getVersion);
@@ -504,6 +638,14 @@ public:
         register_method("set_listener_orientation", &GodotNVAR::setListenerOrientation);
         register_method("trace_audio", &GodotNVAR::traceAudio);
         register_method("synchronize", &GodotNVAR::synchronize);
+        register_method("create_material", &GodotNVAR::createMaterial);
+        register_method("create_predefined_material", &GodotNVAR::createPredefinedMaterial);
+        register_method("destroy_material", &GodotNVAR::destroyMaterial);
+        register_method("get_material_ids", &GodotNVAR::getMaterialIDs);
+        register_method("get_material_reflection", &GodotNVAR::getMaterialReflection);
+        register_method("set_material_reflection", &GodotNVAR::setMaterialReflection);
+        register_method("get_material_transmission", &GodotNVAR::getMaterialTransmission);
+        register_method("set_material_transmission", &GodotNVAR::setMaterialTransmission);
 
         /**
          * The line below is equivalent to the following GDScript export:
@@ -532,6 +674,8 @@ public:
 
     nvar_t nvar;
     const char* contextName = "GodotNVAR";
+
+    std::map<godot::String, nvarMaterial_t*> materials;
 };
 
 /** GDNative Initialize **/
