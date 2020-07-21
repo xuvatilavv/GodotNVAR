@@ -17,39 +17,23 @@ public:
     void printError(nvarStatus_t status, const char* func, int line) {
         const char* title;
         const char* description;
-        const char** pTitle = &title;
-        const char** pDescription = &description;
         nvarStatus_t titleStatus;
         nvarStatus_t descStatus;
 
-        titleStatus = nvarGetStatusString(pTitle, status);
+        titleStatus = nvarGetStatusString(&title, status);
         if (titleStatus != NVAR_STATUS_SUCCESS) {
-            *pTitle = "UNDEFINED";
+            title = "UNDEFINED";
         }
 
-        descStatus = nvarGetStatusDescription(pDescription, status);
+        descStatus = nvarGetStatusDescription(&description, status);
         if (descStatus != NVAR_STATUS_SUCCESS) {
-            *pDescription = "The description is not defined.";
+            description = "The description is not defined.";
         }
 
-        std::string message = *pTitle;
+        std::string message = title;
         message += ": ";
-        message += *pDescription;
+        message += description;
         Godot::print_error(message.c_str(), func, __FILE__, line);
-    }
-    
-    /** Gets the string representation of a status code enum **/
-    Variant getStatusString(nvarStatus_t status) {
-        const char** statusString;
-        nvarStatus_t nvarStatus = nvarGetStatusString(statusString, status);
-        return Variant(*statusString);
-    }
-
-    /** Gets the string description of a status code **/
-    Variant getStatusDescription(nvarStatus_t status) {
-        const char** statusDescription;
-        nvarStatus_t nvarStatus = nvarGetStatusDescription(statusDescription, status);
-        return Variant(*statusDescription);
     }
 
     /** Gets the NVAR API version **/
