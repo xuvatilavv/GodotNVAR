@@ -1,8 +1,10 @@
-GodotNVAR is a wrapper for the [NVIDIA VRWorks Audio](https://developer.nvidia.com/vrworks/vrworks-audio) library for raytraced 3D audio.
+GodotNVAR is a wrapper for the [NVIDIA VRWorks Audio](https://developer.nvidia.com/vrworks/vrworks-audio) library for raytraced 3D audio. Current code is written for Godot 3.2.2, and may need to be adjusted for other versions.
+
+Note: This project is incomplete, and I'm not currently working on it. I'm publishing it in case it's helpful for anyone else. Right now there's enough done to attempt testing, but sending Godot geometry to NVAR results in a crash within the NVAR library that I haven't been able to solve.
 
 ### To use:
 
-A starter project that shows the basic structure for how to set up a Godot project with this library can be found in the `example` directory. The files included are built for 64-bit Godot 3.2.2 on Windows.
+Compile and add the generated DLL as a GDNative library in Godot, along with `nvar.dll` and `optix.6.0.0.dll` provided in the VRWorks Audio download. All methods registered within `_register_methods` can be called from GDScript. See the [NVAR SDK guide](https://developer.nvidia.com/vrworks-audio-sdk-depth) and related documentation for further usage details.
 
 ### To compile this library:
 
