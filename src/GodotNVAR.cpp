@@ -2,6 +2,7 @@
 #include <Reference.hpp>
 #include "nvar.h"
 #include <map>
+#include <Mesh.hpp>
 
 using namespace godot;
 
@@ -463,8 +464,7 @@ public:
         nvarStatus_t nvarStatus;
         nvarMaterial_t material;
         if (materials.count(id) > 0) {// A material with this id already exists.
-            Godot::print_error("Attempted to create a material with a duplicate id: " + id,
-                __FUNCTIONW__, __FILE__, __LINE__);
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
             return;
         }
 
@@ -591,6 +591,121 @@ public:
         }
     }
 
+    /** Converts Godot 3D transform to NVAR's 4x4 matrix **/
+    const nvarMatrix4x4_t getNvarTransformFromGodotTransform(godot::Transform gTransform) {
+        nvarMatrix4x4_t nTransform;
+
+        nTransform.a[0] = gTransform.basis.elements[0][0];
+        nTransform.a[1] = gTransform.basis.elements[0][1];
+        nTransform.a[2] = gTransform.basis.elements[0][2];
+
+        nTransform.a[4] = gTransform.basis.elements[1][0];
+        nTransform.a[5] = gTransform.basis.elements[1][1];
+        nTransform.a[6] = gTransform.basis.elements[1][2];
+
+        nTransform.a[8] = gTransform.basis.elements[2][0];
+        nTransform.a[9] = gTransform.basis.elements[2][1];
+        nTransform.a[10] = gTransform.basis.elements[2][2];
+
+        nTransform.a[3] = gTransform.origin.x;
+        nTransform.a[7] = gTransform.origin.y;
+        nTransform.a[11] = gTransform.origin.z;
+
+        nTransform.a[12] = 0.0f;
+        nTransform.a[13] = 0.0f;
+        nTransform.a[14] = 0.0f;
+        nTransform.a[15] = 1.0f;
+
+        return nTransform;
+    }
+
+    /** Creates an acoustic mesh **/
+    void createMesh(godot::String id,
+                    godot::Transform gTransform,
+                    const godot::Ref<Mesh> gMeshRef,
+                    godot::String materialID) {
+        nvarStatus_t nvarStatus;
+        nvarMesh_t nMesh;
+        // check that mesh does not exist, and that material does exist.
+        if (meshes.count(id) > 0 || materials.count(materialID) == 0) {
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return;
+        }
+        // get pointer to the selected material
+        nvarMaterial_t* material = materials[materialID];
+        // convert transform
+        const nvarMatrix4x4_t nTransform = getNvarTransformFromGodotTransform(gTransform);
+
+        // get vertices and face count
+        godot::PoolVector3Array gVertices = gMeshRef->get_faces();
+        int numVertices = gVertices.size();
+        int numFaces = numVertices/3;
+
+        // convert vertices
+        nvarFloat3_t* nVertices = new nvarFloat3_t[numVertices];
+        for (int i = 0; i < numVertices; i++) {
+            nVertices[i].x = gVertices[i].x;
+            nVertices[i].y = gVertices[i].y;
+            nVertices[i].z = gVertices[i].z;
+        }
+
+        // Interpret vertices into faces. In Godot all faces are tris, 
+        // so every three vertices is a face. Not sure exactly the 
+        // numbering scheme NVAR wants, the demo project is unclear.
+        int* faces = new int[numVertices];
+        for (int f = 0; f < numFaces; ++f) {
+            int i = f*3;
+            faces[i] = f;
+            faces[i+1] = f;
+            faces[i+2] = f;
+        }
+
+        nvarStatus = nvarCreateMesh(nvar, &nMesh, nTransform, nVertices,
+                    numVertices, faces, numFaces, *material);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            meshes[id] = &nMesh;
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
+    /** Destroys the specified acoustic mesh **/
+    void destroyMesh(godot::String id) {
+        nvarStatus_t nvarStatus;
+        if (meshes.count(id) == 0) { // No material with this id exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return;
+        }
+
+        nvarMesh_t* mesh = meshes[id];
+
+        nvarStatus = nvarDestroyMesh(*mesh);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            meshes.erase(id);
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
+    /** Gets the id of the acoustic material of the mesh **/
+
+    /** Create a sound source **/
+    void createSource(godot::String id, int effect) {
+        nvarStatus_t nvarStatus;
+        nvarSource_t source;
+        if (materials.count(id) > 0) {// A material with this id already exists.
+            printError(NVAR_STATUS_INVALID_VALUE,  __FUNCTION__, __LINE__);
+            return;
+        }
+
+        nvarStatus = nvarCreateSource(nvar, static_cast<nvarEffect_t>(effect), &source);
+        if (nvarStatus == NVAR_STATUS_SUCCESS) {
+            sources[id] = &source;
+        } else {
+            printError(nvarStatus, __FUNCTION__, __LINE__);
+        }
+    }
+
     /** Register methods, members, and signals to expose them to Godot **/
     static void _register_methods() {
         register_method("get_version", &GodotNVAR::getVersion);
@@ -630,6 +745,9 @@ public:
         register_method("set_material_reflection", &GodotNVAR::setMaterialReflection);
         register_method("get_material_transmission", &GodotNVAR::getMaterialTransmission);
         register_method("set_material_transmission", &GodotNVAR::setMaterialTransmission);
+        register_method("create_mesh", &GodotNVAR::createMesh);
+        register_method("destroy_mesh", &GodotNVAR::destroyMesh);
+        register_method("create_source", &GodotNVAR::createSource);
 
         /**
          * The line below is equivalent to the following GDScript export:
@@ -660,6 +778,8 @@ public:
     const char* contextName = "GodotNVAR";
 
     std::map<godot::String, nvarMaterial_t*> materials;
+    std::map<godot::String, nvarMesh_t*> meshes;
+    std::map<godot::String, nvarSource_t*> sources;
 };
 
 /** GDNative Initialize **/
